@@ -205,3 +205,6 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# jar files
+hospital_system/streaming_processing/kafka/kafka_connect/jars

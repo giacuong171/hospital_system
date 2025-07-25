@@ -1,0 +1,31 @@
+{
+  "doc": "ECG",
+  "type": "record",
+  "name": "MonitorData",
+  "fields": [
+    {
+      "field": "monitor_id",
+      "type": "string"
+    },
+    {
+      "field": "room",
+      "type": "string"
+    },
+    {
+      "field": "created",
+      "type": "string"
+    },
+    {
+      "field": "ecg_signal",
+      "type": "double"
+    },
+    {
+      "field": "lead",
+      "type": "string"
+    },
+    {
+      "field": "sampling_rate",
+      "type": "int"
+    }
+  ]
+}
