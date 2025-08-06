@@ -35,15 +35,29 @@ args = parser.parse_args()
 NUM_DEVICES = 1
 
 
-def generate_ecg_message(t=0, frequency=1.3):
+def generate_ecg_message(
+    base_amplitude=0.7, noise_level=0.05, anomaly_probability=0.01, t=0, frequency=1.3
+):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ecg_signal = base_amplitude + random.uniform(-noise_level, noise_level)
+    anomaly_type = None
+    if random.random() < anomaly_probability:
+        anomaly_type = random.choice(["spike", "flatline"])
 
-    ecg_signal = 0.6 * np.sin(2 * np.pi * frequency * t) + np.random.normal(0, 0.05)
-    monitor_id = "monitor_" + str(random.randint(1, 10))
+    if anomaly_type == "spike":
+        ecg_signal = random.uniform(2.0, 4.0) * random.choice([-1, 1])
+    elif anomaly_type == "flatline":
+        ecg_signal = 0.0
+
+    # ecg_signal = 0.6 * np.sin(2 * np.pi * frequency * t) + np.random.normal(0, 0.05)
+    random_id = random.randint(1, 10)
+    monitor_id = "monitor_" + str(random_id)
     room = random.choice(["ICU", "ICC"])
+    patientID = "P00" + str(random_id).zfill(2)
     lead = "II"
     message = {
         "monitor_id": monitor_id,
+        "patient_id": patientID,
         "room": room,
         "created": timestamp,
         "ecg_signal": float(ecg_signal),

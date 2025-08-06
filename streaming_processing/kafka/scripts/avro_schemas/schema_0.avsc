@@ -8,6 +8,10 @@
       "type": "string"
     },
     {
+      "field": "patient_id",
+      "type": "string"
+    },
+    {
       "field": "room",
       "type": "string"
     },
@@ -25,7 +29,7 @@
     },
     {
       "field": "sampling_rate",
-      "type": "int"
+      "type": "int32"
     }
   ]
 }

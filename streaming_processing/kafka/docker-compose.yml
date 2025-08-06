@@ -35,7 +35,7 @@ services:
     environment:
       # ID of the broker in a cluster
       KAFKA_BROKER_ID: 1
-       # Connect to Zoo Keeper for distributed coordination and leader election
+      # Connect to Zoo Keeper for distributed coordination and leader election
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       # Define how clients connect to brokers
@@ -103,7 +103,7 @@ services:
       CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: true
       CONNECT_PLUGIN_PATH: '/usr/share/java,/etc/kafka-connect/jars'
     volumes:
-      - $PWD/kafka_connect/jars/:/etc/kafka-connect/jars
+      - $PWD/../flink/kafka_connect/jars/:/etc/kafka-connect/jars
 
   # Confluent control center to manage Kafka
   control-center:
@@ -148,7 +148,38 @@ services:
       - POSTGRES_PASSWORD=k6
     volumes:
       - pgdata:/var/lib/postgresql/data
-
+    
+  # influxdb:
+  #   image: influxdb:2
+  #   ports:
+  #     - 8086:8086
+  #   container_name: influxdb
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+  #     interval: 30s
+  #     timeout: 5s
+  #     retries: 3
+  #     start_period: 20s
+  #   environment:
+  #     - DOCKER_INFLUXDB_INIT_MODE=setup
+  #     - DOCKER_INFLUXDB_INIT_USERNAME=admin
+  #     - DOCKER_INFLUXDB_INIT_PASSWORD=admin123
+  #     - DOCKER_INFLUXDB_INIT_ORG=myorg
+  #     - DOCKER_INFLUXDB_INIT_BUCKET=mybucket
+  #     - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=my-secret-token
+  #   volumes:
+  #     - influxdb_data:/var/lib/influxdb2
+    # secrets:
+    #   - influxdb2-admin-username
+    #   - influxdb2-admin-password
+    #   - influxdb2-admin-token
+  # secrets:
+  #   influxdb2-admin-username:
+  #     file: ~/influxdb/.env.influxdb2-admin-username
+  #   influxdb2-admin-password:
+  #     file: ~/influxdb/.env.influxdb2-admin-password
+  #   influxdb2-admin-token:
+  #     file: ~/influxdb/.env.influxdb2-admin-token
   # Simulation of sending messages to Kafka topics
   # kafka_producer:
   #   container_name: flink-kafka-producer
@@ -164,3 +195,5 @@ services:
 volumes:
   # Volume for TimescaleDB
   pgdata:
+  # influxdb2-data:
+  # influxdb2-config:
