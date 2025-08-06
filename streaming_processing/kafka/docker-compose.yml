@@ -181,16 +181,16 @@ services:
   #   influxdb2-admin-token:
   #     file: ~/influxdb/.env.influxdb2-admin-token
   # Simulation of sending messages to Kafka topics
-  # kafka_producer:
-  #   container_name: flink-kafka-producer
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   depends_on:
-  #     broker:
-  #       condition: service_healthy
-  #     timescaledb:
-  #       condition: service_healthy
+  kafka_producer:
+    container_name: flink-kafka-producer
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      broker:
+        condition: service_healthy
+      timescaledb:
+        condition: service_healthy
 
 volumes:
   # Volume for TimescaleDB
