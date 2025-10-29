@@ -3,25 +3,32 @@ Test suite for kafka_flink_common utilities.
 
 These tests verify that the refactored shared utilities maintain
 the same behavior as the original duplicated code.
+
+Note: These tests mock the pyflink module since it may not be installed.
 """
 import json
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock
 
 # Add src to path to allow imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Mock pyflink modules before any imports
+sys.modules['pyflink'] = MagicMock()
+sys.modules['pyflink.common'] = MagicMock()
+sys.modules['pyflink.common.serialization'] = MagicMock()
+sys.modules['pyflink.common.watermark_strategy'] = MagicMock()
+sys.modules['pyflink.datastream'] = MagicMock()
+sys.modules['pyflink.datastream.connectors'] = MagicMock()
+sys.modules['kafka'] = MagicMock()
+
+# Now we can safely import after mocking
+from utils.kafka_flink_common import parse_json
+
 
 def test_parse_json():
     """Test that parse_json correctly extracts data from JSON message."""
-    # Mock pyflink before importing
-    from unittest.mock import MagicMock
-    sys.modules['pyflink'] = MagicMock()
-    sys.modules['pyflink.common'] = MagicMock()
-    sys.modules['pyflink.common.watermark_strategy'] = MagicMock()
-    
-    from utils.kafka_flink_common import parse_json
-    
     # Create a test message
     test_message = {
         "schema": {"type": "struct"},
@@ -60,14 +67,6 @@ def test_parse_json():
 
 def test_parse_json_with_numeric_conversion():
     """Test that parse_json correctly converts string numbers to proper types."""
-    # Mock pyflink before importing
-    from unittest.mock import MagicMock
-    sys.modules['pyflink'] = MagicMock()
-    sys.modules['pyflink.common'] = MagicMock()
-    sys.modules['pyflink.common.watermark_strategy'] = MagicMock()
-    
-    from utils.kafka_flink_common import parse_json
-    
     test_message = {
         "payload": {
             "monitor_id": "monitor_2",
@@ -127,4 +126,5 @@ if __name__ == "__main__":
     
     print()
     print("All tests passed! ✓")
+
 
