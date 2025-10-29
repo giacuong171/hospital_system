@@ -28,6 +28,10 @@ from utils.kafka_flink_common import (
     parse_json,
     CustomTimestampAssigner,
     ECG_SIGNAL_TUPLE_TYPE,
+    setup_flink_environment,
+    create_kafka_clients,
+    create_kafka_consumer,
+    create_watermark_strategy,
 )
 
 
@@ -58,18 +62,12 @@ class CountWindowProcessFunction(ProcessWindowFunction[tuple, tuple, str, TimeWi
 if __name__ == "__main__":
     JARS_PATH = f"{os.getcwd()}/kafka_connect/jars"
     print(JARS_PATH)
-    servers = "localhost:9092"
-    producer = KafkaProducer(bootstrap_servers=servers)
-    admin_client = KafkaAdminClient(bootstrap_servers=servers)
+    producer, admin_client = create_kafka_clients()
     topic_name = "ecg_signal_alert"
     if topic_name not in admin_client.list_topics():
         topic = NewTopic(name=topic_name, num_partitions=5, replication_factor=1)
         admin_client.create_topics([topic])
-    env = StreamExecutionEnvironment.get_execution_environment()
-    env.add_jars(
-        f"file://{JARS_PATH}/flink-connector-kafka-1.17.1.jar",
-        f"file://{JARS_PATH}/kafka-clients-3.4.0.jar",
-    )
+    env = setup_flink_environment(JARS_PATH)
     # Define the source to take data from
     sink = (
         KafkaSink.builder()
@@ -82,17 +80,9 @@ if __name__ == "__main__":
         )
         .build()
     )
-    kafka_consumer = FlinkKafkaConsumer(
-        topics="ICU_room",
-        deserialization_schema=SimpleStringSchema(),
-        properties={"bootstrap.servers": "localhost:9092", "group.id": "test_group"},
-    )
+    kafka_consumer = create_kafka_consumer("ICU_room")
     print("kafka_consumer: ", kafka_consumer)
-    watermark_strategy = (
-        WatermarkStrategy.for_monotonous_timestamps()
-        .with_timestamp_assigner(CustomTimestampAssigner())
-        .with_idleness(Duration.of_seconds(30))
-    )
+    watermark_strategy = create_watermark_strategy()
     stream = env.add_source(kafka_consumer).map(
         parse_json,
         output_type=ECG_SIGNAL_TUPLE_TYPE,

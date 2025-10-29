@@ -5,8 +5,13 @@ This module contains shared functions and classes used across multiple
 Flink streaming jobs to avoid code duplication.
 """
 import json
+import os
 from pyflink.common import Types
-from pyflink.common.watermark_strategy import TimestampAssigner
+from pyflink.common.serialization import SimpleStringSchema
+from pyflink.common.watermark_strategy import TimestampAssigner, WatermarkStrategy, Duration
+from pyflink.datastream import StreamExecutionEnvironment
+from pyflink.datastream.connectors import FlinkKafkaConsumer
+from kafka import KafkaAdminClient, KafkaProducer
 
 
 def parse_json(value):
@@ -78,3 +83,79 @@ ECG_SIGNAL_COLUMNS = [
     "lead",
     "sampling_rate",
 ]
+
+
+def setup_flink_environment(jars_path=None):
+    """
+    Set up Flink execution environment with required JAR files.
+    
+    Args:
+        jars_path: Path to JAR files directory. If None, uses default path.
+        
+    Returns:
+        StreamExecutionEnvironment: Configured Flink environment
+    """
+    if jars_path is None:
+        jars_path = f"{os.getcwd()}/kafka_connect/jars"
+    
+    env = StreamExecutionEnvironment.get_execution_environment()
+    env.add_jars(
+        f"file://{jars_path}/flink-connector-kafka-1.17.1.jar",
+        f"file://{jars_path}/kafka-clients-3.4.0.jar",
+    )
+    return env
+
+
+def create_kafka_clients(bootstrap_servers="localhost:9092"):
+    """
+    Create Kafka producer and admin client.
+    
+    Args:
+        bootstrap_servers: Kafka bootstrap servers address
+        
+    Returns:
+        tuple: (KafkaProducer, KafkaAdminClient)
+    """
+    producer = KafkaProducer(bootstrap_servers=bootstrap_servers)
+    admin_client = KafkaAdminClient(bootstrap_servers=bootstrap_servers)
+    return producer, admin_client
+
+
+def create_kafka_consumer(topic, bootstrap_servers="localhost:9092", group_id="test_group"):
+    """
+    Create a Flink Kafka consumer.
+    
+    Args:
+        topic: Kafka topic to consume from
+        bootstrap_servers: Kafka bootstrap servers address
+        group_id: Consumer group ID
+        
+    Returns:
+        FlinkKafkaConsumer: Configured Kafka consumer
+    """
+    return FlinkKafkaConsumer(
+        topics=topic,
+        deserialization_schema=SimpleStringSchema(),
+        properties={
+            "bootstrap.servers": bootstrap_servers,
+            "group.id": group_id
+        },
+    )
+
+
+def create_watermark_strategy(idleness_seconds=30):
+    """
+    Create a watermark strategy for monotonous timestamps.
+    
+    Args:
+        idleness_seconds: Seconds to wait before marking source as idle
+        
+    Returns:
+        WatermarkStrategy: Configured watermark strategy
+    """
+    return (
+        WatermarkStrategy.for_monotonous_timestamps()
+        .with_timestamp_assigner(CustomTimestampAssigner())
+        .with_idleness(Duration.of_seconds(idleness_seconds))
+    )
+
